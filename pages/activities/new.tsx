@@ -1,0 +1,50 @@
+"use client";
+
+import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useStore } from "@/store";
+import { ActivityForm } from "@/components/ActivityForm";
+
+export default function NewActivityPage() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
+  const { addActivity } = useStore();
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async (activityData: any) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await addActivity(activityData);
+      router.push("/activities");
+    } catch (error) {
+      console.error("Error creating activity:", error);
+      setError("Failed to create activity. Please try again later.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (status === "loading") {
+    return <p>Loading...</p>;
+  }
+
+  if (status === "unauthenticated") {
+    router.push("/login");
+    return null;
+  }
+
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+      <div className="flex flex-col items-center gap-10">
+        <h1 className="text-4xl font-bold">Log New Activity</h1>
+        {error && <p className="text-red-500">{error}</p>}
+        <ActivityForm onSubmit={handleSubmit} isLoading={isLoading} />
+      </div>
+    </main>
+  );
+}
